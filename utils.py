@@ -4,19 +4,19 @@ from requests import get
 from datetime import datetime
 
 
-def load_json(link: str):
+def load_json(link: str) -> list | None:
     """Загружает JSON с указанного url"""
     try:  # пробует загрузить JSON
         data = get(link).json()
     except Exception:
         return None  # возвращает None в случае любой ошибки
     else:
-        return data  # возвращает результат, если удалось загрузить
+        return data if type(data) == list else None  # возвращает результат, если удалось загрузить list
 
 
 def operation_check(operation: dict) -> bool:
     """Проверяет операцию на соответствие шаблону"""
-    op_str = dumps(operation, ensure_ascii=False)  # преобразует словарь в строку
+    op_str = dumps(operation, ensure_ascii=False)  # преобразует список или словарь в строку
     # определяет шаблон для проверки структуры операции
     regex = r'{"id": \d+, "state": "EXECUTED", "date": "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}", ' \
             r'"operationAmount": {"amount": "\d*\.?\d*", "currency": {"name": ".+", "code": ".+"}}, ' \
@@ -25,7 +25,7 @@ def operation_check(operation: dict) -> bool:
     return True if fullmatch(regex, op_str) else False
 
 
-def select(data: list[dict], num: int) -> list[dict] | None:
+def select(data: list, num: int) -> list[dict] | None:
     """Возвращает подходящие по шаблону, отсортированные по полю 'date', данные в нужном количестве, если их есть"""
     operations = list(filter(operation_check, data))  # фильтрует соответствующие шаблону словари
     if len(operations) >= num:  # если данных достаточно, сортирует по полю 'date' и возвращает
